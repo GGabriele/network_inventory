@@ -6,39 +6,36 @@ _PASSWORD = 'cisco'
 
 class Router(object):
 
-''' 
-We'll connect to each node of the network using PExpect.
-Then we'll filter command outputs using regular expressions and lastly, 
-we'll store these filtered output into the "net_invent.txt" file.
 
-Informations we'll obtain:
-	- Router_ID
-	- RAM Memory
-	- Flash Memory
-	- IOS Version
-	- Linecards
-	- Serial numbers
-'''
+    ''' 
+    We'll connect to each node of the network using PExpect.
+    Then we'll filter command outputs using regular expressions and lastly, 
+    we'll store these filtered output into the "net_invent.txt" file.
 
-
-    network_nodes = {}    # We'll store here couples Router_ID : IP_address.
-    diagram = {}
-    f = open('Routers.txt', 'r')					         
-
-
-    for line in f:
-        list = line.split()
-        diz[list[0]] = list[1]
-
-    print network_nodes
-    f.close()
+    Informations we'll obtain:
+	   - Router_ID
+	   - RAM Memory
+	   - Flash Memory
+       - Free Flash
+	   - IOS Version
+	   - Linecards
+	   - Serial numbers
+    '''
+    def __init__(arg):  
+        self.model = None
+        self.memory = None
+        self.flash = None
+        self.free_flash = None
+        self.version = None
+        self.linecards = None  
 
 
-    def check_version(command):
+    def check_version(self, command):
         child.sendline(command)
         child.sendline()
         child.expect (router+'>', timeout = 30)
         output_version = child.before.split()
+        print "CHILD BEFORE: ", child.before
 
         filter_version = re.findall("\(C.+\)", child.before)
         final_filter_version = re.sub("(RELEASE.*) \(f.+\)", " ", str(filter_version)).replace(",", " ").replace("[", " ").replace("]", " ").replace("'", "")
@@ -48,7 +45,7 @@ Informations we'll obtain:
         return final_filter_version
 
 
-    def check_model(command):
+    def check_model(self, command):
         child.sendline(command)
         child.expect (router+'>')
         output_model = child.before
@@ -59,7 +56,7 @@ Informations we'll obtain:
         return model
 
 
-    def check_memory(command):
+    def check_memory(self, command):
         child.sendline(command)
         child.expect (router+'>')
         output_memory = child.before
@@ -75,7 +72,7 @@ Informations we'll obtain:
         return total_memory
 
 
-    def check_flash(command):
+    def check_flash(self, command):
         child.sendline(command)
         child.expect (router+'>')
         output_flash = child.before
@@ -86,7 +83,7 @@ Informations we'll obtain:
         return flash
 
 
-    def check_free_flash(command):
+    def check_free_flash(self, command):
         child.sendline("enable")
         child.expect("Password: ")
         child.sendline (_PASSWORD)
@@ -103,7 +100,7 @@ Informations we'll obtain:
         return free_flash
 
 
-    def check_line_cards(command):
+    def check_line_cards(self, command):
 
         '''
         First, we have to know how many linecards exist inside our device. The "max_slot" variable will 
@@ -160,65 +157,74 @@ Informations we'll obtain:
 
 
 
-    def launch():
+def main():
+    network_nodes = {}    # We'll store here couples Router_ID : IP_address.
+    diagram = {}
+    f = open('Routers.txt', 'r')                             
 
-        inventory = open('net_invent', 'a')
+    for line in f:
+        list = line.split()
+        diz[list[0]] = list[1]
+
+    print network_nodes
+    f.close()
+
+    inventory = open('net_invent', 'a')
+
+    for router in network_nodes:
+        print 'Router: %s' % router
+        ip_address = diz[router]
+        print 'ip_address: %s' % ip_address
+        child = pexpect.spawn('telnet ' + ip_address )
+        child.expect ('Username: ')
+        child.sendline (_USERNAME)
+        child.expect('Password: ')
+        child.sendline(_PASSWORD)
+        child.expect (router+'>')
+
+
+        # VERSION
+
+        send   = 'sh version | exclude ^$'
+        verion = check_version(send)
+
+        # MODEL
+
+        send  = 'sh ver | sec include processor'
+        model = check_model(send)
+
+        # RAM
+
+        send   = 'sh ver | sec include memory'
+        memory = check_memory(send)
+
+        # FLASH
+
+        send  = 'sh ver | sec include flash'
+        flash = check_flash(send)
+
+        # FREE FLASH
+
+        send       = 'dir flash:'
+        free_flash = check_free_flash(send)
+
+
+        # LINECARDS AND SN
+
+        send = 'sh diag ?'
+        linecard = check_line_cards(send)
+
+
+        diagram[router] = {
+            "Model: "      : model,
+            "Version: "    : version,
+            "RAM: "        : memory,
+            "Flash: "      : flash,
+            "Free Flash: " : free_flash,
+            "Linecards: "  : linecard
+        }
+
+        print diagram
         
-        for router in network_nodes:
 
-            print 'Router: %s' % router
-            ip_address = diz[router]
-            print 'ip_address: %s' % ip_address
-            child = pexpect.spawn('telnet ' + ip_address )
-            child.expect ('Username: ')
-            child.sendline (_USERNAME)
-            child.expect('Password: ')
-            child.sendline(_PASSWORD)
-            child.expect (router+'>')
-
-
-            # VERSION
-
-            send   = 'sh version | exclude ^$'
-            verion = check_version(send)
-
-            # MODEL
-
-            send  = 'sh ver | sec include processor'
-            model = check_model(send)
-
-            # RAM
-
-            send   = 'sh ver | sec include memory'
-            memory = check_memory(send)
-
-            # FLASH
-
-            send  = 'sh ver | sec include flash'
-            flash = check_flash(send)
-
-            # FREE FLASH
-
-            send       = 'dir flash:'
-            free_flash = check_free_flash(send)
-
-
-            # LINECARDS AND SN
-
-            send = 'sh diag ?'
-            linecard = check_line_cards(send)
-
-
-            diagram[router] = {
-                "Model: "      : model,
-                "Version: "    : version,
-                "RAM: "        : memory,
-                "Flash: "      : flash,
-                "Free Flash: " : free_flash
-                "Linecards: "  : linecard
-            }
-
-            print diagram
-        
-
-        inventory.close()
+    inventory.close()
