@@ -9,7 +9,7 @@ Informations we'll obtain:
 	- Router_ID
 	- RAM Memory
 	- Flash Memory
-  - Free Flash
+	- Free Flash
 	- IOS Version
 	- Linecards
 	- Serial numbers
