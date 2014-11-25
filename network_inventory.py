@@ -39,7 +39,6 @@ Informations we'll obtain:
         child.sendline()
         child.expect (router+'>', timeout = 30)
         output_version = child.before.split()
-        print "CHILD BEFORE: ", child.before
 
         filter_version = re.findall("\(C.+\)", child.before)
         final_filter_version = re.sub("(RELEASE.*) \(f.+\)", " ", str(filter_version)).replace(",", " ").replace("[", " ").replace("]", " ").replace("'", "")
