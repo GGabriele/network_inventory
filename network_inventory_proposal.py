@@ -16,7 +16,7 @@ Copyright or opensource license here.
 """
 class Junos_Router():
     """
-    this class offers support for Cisco IOS Routers.
+    this class offers support for Juniper Routers.
 
     Arguments:
         <IPv4_address> string: ipv4 address of the node.
