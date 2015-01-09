@@ -76,7 +76,7 @@ class IOS_Router():
         results = []
         try:
             try:
-                print "Connecting to " + senf._ip_address
+                print "Connecting to " + self._ip_address
                 remote_conn_pre = paramiko.SSHClient()
                 remote_conn_pre.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 remote_conn_pre.connect(self._ip_address, username=self._user, password=self._pass)
