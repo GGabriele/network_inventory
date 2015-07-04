@@ -60,7 +60,7 @@ class IOS_Router():
         self._ip_address = ip_address
         self._enable = enable
 
-    def __run_commands(self, commandList, time=5000):
+    def __run_commands(self, commandList, buffer=5000):
         """ this function runs the specified commands on the node and returns a
         list with unfiltered results.
 
